@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    body { font-family: Arial; padding: 10px; }
+    input, select, textarea, button {
+      width: 100%;
+      margin-bottom: 8px;
+      padding: 6px;
+    }
+    button {
+      background: #1a73e8;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<h3>Cadastro de Conta</h3>
+
+<select id="tipo">
+  <option value="CORRENTE">Conta Corrente</option>
+  <option value="CREDITO">Cartão de Crédito</option>
+  <option value="POUPANCA">Poupança</option>
+  <option value="INVESTIMENTO">Investimento</option>
+  <option value="FINANCIAMENTO">Financiamento</option>
+</select>
+
+<input id="nome" placeholder="Nome da conta" />
+<input id="instituicao" placeholder="Instituição (Banco / Corretora)" />
+
+<input id="limite" type="number" placeholder="Limite" />
+<input id="saldo" type="number" placeholder="Saldo inicial" />
+
+<input id="fechamento" type="number" placeholder="Dia de fechamento" />
+<input id="vencimento" type="number" placeholder="Dia de vencimento" />
+
+<select id="ativo">
+  <option value="true">Ativo</option>
+  <option value="false">Inativo</option>
+</select>
+
+<textarea id="obs" placeholder="Observações"></textarea>
+
+<button onclick="salvar()">Salvar Conta</button>
+
+<script>
+function salvar() {
+  const dados = {
+    tipo: document.getElementById("tipo").value,
+    nome: document.getElementById("nome").value,
+    instituicao: document.getElementById("instituicao").value,
+    limite: document.getElementById("limite").value,
+    saldo: document.getElementById("saldo").value,
+    fechamento: document.getElementById("fechamento").value,
+    vencimento: document.getElementById("vencimento").value,
+    ativo: document.getElementById("ativo").value === "true",
+    obs: document.getElementById("obs").value
+  };
+
+  google.script.run
+    .withSuccessHandler(msg => {
+      alert(msg);
+      document.querySelectorAll("input, textarea").forEach(e => e.value = "");
+    })
+    .salvarConta(dados);
+}
+</script>
+
+</body>
+</html>
+

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 12px;
+    }
+    select, input, button {
+      width: 100%;
+      margin-bottom: 8px;
+      padding: 6px;
+    }
+    label {
+      font-size: 13px;
+    }
+    .hidden {
+      display: none;
+    }
+    button {
+      background: #1a73e8;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+
+<h3>Novo Lançamento</h3>
+
+<select id="tipo" onchange="carregarCategorias()">
+  <option value="">Tipo</option>
+  <option value="ENTRADA">Entrada</option>
+  <option value="GASTO">Gasto</option>
+</select>
+
+<select id="categoria" onchange="carregarSubcategorias()">
+  <option value="">Categoria</option>
+</select>
+
+<select id="subcategoria">
+  <option value="">Subcategoria</option>
+</select>
+
+<select id="conta">
+  <option value="">Conta</option>
+</select>
+
+<input type="date" id="data">
+<input type="number" id="valor" placeholder="Valor total">
+
+<label>
+  <input type="checkbox" id="parcelado" onchange="toggleParcelas()"> Parcelado
+</label>
+
+<input type="number" id="parcelas" placeholder="Quantidade de parcelas" class="hidden">
+<input type="text" id="obs" placeholder="Observações">
+
+<button onclick="salvar()">Salvar lançamento</button>
+
+<script>
+let categorias = {};
+let contas = [];
+
+// =======================
+// CARREGAMENTO INICIAL
+// =======================
+
+// Categorias
+google.script.run.withSuccessHandler(ret => {
+  categorias = ret;
+}).getCategorias();
+
+// Contas
+google.script.run.withSuccessHandler(ret => {
+  contas = ret;
+  const select = document.getElementById('conta');
+  ret.forEach(c => {
+    select.innerHTML += `<option value="${c.id}">${c.nome}</option>`;
+  });
+}).getContasAtivas();
+
+// =======================
+// HELPERS
+// =======================
+const tipoEl = () => document.getElementById('tipo');
+const categoriaEl = () => document.getElementById('categoria');
+const subcategoriaEl = () => document.getElementById('subcategoria');
+const parceladoEl = () => document.getElementById('parcelado');
+const parcelasEl = () => document.getElementById('parcelas');
+
+// =======================
+// FUNÇÕES DE UI
+// =======================
+function carregarCategorias() {
+  categoriaEl().innerHTML = '<option value="">Categoria</option>';
+  subcategoriaEl().innerHTML = '<option value="">Subcategoria</option>';
+
+  const tipo = tipoEl().value;
+  if (!categorias[tipo]) return;
+
+  Object.keys(categorias[tipo]).forEach(cat => {
+    categoriaEl().innerHTML += `<option value="${cat}">${cat}</option>`;
+  });
+}
+
+function carregarSubcategorias() {
+  subcategoriaEl().innerHTML = '<option value="">Subcategoria</option>';
+
+  const tipo = tipoEl().value;
+  const categoria = categoriaEl().value;
+  if (!categorias[tipo] || !categorias[tipo][categoria]) return;
+
+  categorias[tipo][categoria].forEach(item => {
+    subcategoriaEl().innerHTML += `
+      <option data-parcela="${item.permiteParcela}">
+        ${item.subcategoria}
+      </option>`;
+  });
+
+  parceladoEl().checked = false;
+  parcelasEl().classList.add('hidden');
+}
+
+function toggleParcelas() {
+  const opt = subcategoriaEl().options[subcategoriaEl().selectedIndex];
+  if (opt?.dataset.parcela !== 'SIM') {
+    alert('Essa subcategoria não permite parcelamento');
+    parceladoEl().checked = false;
+    return;
+  }
+  parcelasEl().classList.toggle('hidden', !parceladoEl().checked);
+}
+
+// =======================
+// SALVAR
+// =======================
+function salvar() {
+  const dados = {
+    tipo: tipoEl().value,
+    categoria: categoriaEl().value,
+    subcategoria: subcategoriaEl().value,
+    data: document.getElementById('data').value,
+    valor: document.getElementById('valor').value,
+    parcelado: parceladoEl().checked,
+    parcelas: document.getElementById('parcelas').value,
+    idConta: document.getElementById('conta').value,
+    obs: document.getElementById('obs').value
+  };
+
+  google.script.run
+    .withSuccessHandler(msg => alert(msg))
+    .withFailureHandler(err => alert(err.message))
+    .salvarLancamento(dados);
+}
+</script>
+
+</body>
+</html>
